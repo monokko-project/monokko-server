@@ -7,7 +7,7 @@ from model.nlp import NLPmodel
 
 HOST = '0.0.0.0'  
 PORT = 10000
-IMAGE_PATH = "recived_frame.jpg"
+IMAGE_PATH = "recieved_frame.jpg"
 
 def main(_host, _port, _image_model, _nlp_model, _image_path):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
