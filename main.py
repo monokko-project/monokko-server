@@ -51,7 +51,7 @@ def main(_host, _port, _image_model, _nlp_model, _image_path):
                         # text = generate_text(_model, _image_path)
                         text = _image_model.run(_image_path)
                         conn.sendall(text.encode("utf-8"))
-                        result = _nlp_model.translate_model(text)
+                        result = _nlp_model.trans_en_to_jp(text)
                         conn.sendall(result.encode("utf-8"))
 
 

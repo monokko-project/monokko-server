@@ -24,8 +24,10 @@ class NLPmodel:
         return noun_list
     
     def trans_en_to_jp(self, text):
-        result = self.translate_model(text)
-        print(result)
+        result = self.translate_model(text)[0]
+        
+        return result['translation_text']
+        
 
 # nlp = NLPmodel()
 # result = nlp.extract_noun(text)
