@@ -3,20 +3,13 @@ import socket
 import numpy as np
 import struct
 from model.image2text import Image2Text
-
+from model.nlp import NLPmodel
 
 HOST = '0.0.0.0'  
 PORT = 10000
 IMAGE_PATH = "recived_frame.jpg"
 
-
-def generate_text(_model, _image_path):
-    text = _model.run(_image_path)
-    print(text)
-    return text
-
-
-def main(_host, _port, _model, _image_path):
+def main(_host, _port, _image_model, _nlp_model, _image_path):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         # launch and wait
         s.bind((_host, _port))
@@ -55,8 +48,14 @@ def main(_host, _port, _model, _image_path):
                         frame = cv2.imdecode(frame_data, 3)
 
                         cv2.imwrite( _image_path, frame)
-                        generate_text(_model, _image_path)
+                        # text = generate_text(_model, _image_path)
+                        text = _image_model.run(_image_path)
+                        conn.sendall(text.encode("utf-8"))
+                        result = _nlp_model.translate_model(text)
+                        conn.sendall(result.encode("utf-8"))
+
 
 if __name__ == "__main__":
     model = Image2Text()
-    main(HOST, PORT, model, IMAGE_PATH)
+    nlp_en = NLPmodel("en_core_web_sm")
+    main(HOST, PORT, model, nlp_en, IMAGE_PATH)
