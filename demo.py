@@ -2,8 +2,9 @@ import cv2
 import socket
 import numpy as np
 import struct
-from model.image2text import Image2Text
-from model.nlp import NLPmodel
+
+# from model.vision2language import vision2language
+from model.v2l_claude import vision2language
 
 HOST = '0.0.0.0'  
 PORT = 10000
@@ -49,13 +50,16 @@ def main(_host, _port, _image_model, _nlp_model, _image_path):
 
                         cv2.imwrite( _image_path, frame)
                         # text = generate_text(_model, _image_path)
-                        text = _image_model.run(_image_path)
+                        text = _image_model.run("recieved_frame.png", "この画像について説明してください。”モノ”について注意深く、可能な限り詳しく説明してください。")
+                        # text = "Hello World"
                         conn.sendall(text.encode("utf-8"))
-                        result = _nlp_model.trans_en_to_jp(text)
+                        # result = _nlp_model.trans_en_to_jp(text)
+                        result = "こんにちは、世界"
                         conn.sendall(result.encode("utf-8"))
 
 
 if __name__ == "__main__":
-    model = Image2Text()
-    nlp_en = NLPmodel("en_core_web_sm")
-    main(HOST, PORT, model, nlp_en, IMAGE_PATH)
+    # model = Image2Text()
+    model = vision2language()
+    # nlp_en = NLPmodel("en_core_web_sm")
+    main(HOST, PORT, model, None, IMAGE_PATH)
