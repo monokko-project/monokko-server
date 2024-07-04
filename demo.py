@@ -10,6 +10,53 @@ HOST = '0.0.0.0'
 PORT = 10000
 IMAGE_PATH = "recieved_frame.png"
 
+
+
+v2l_prompt = "この画像について説明してください。”モノ”について注意深く、可能な限り詳しく説明してください。"
+
+def camera_process(conn,_image_model, _image_path):
+     while True:
+        # size of frame data
+        data = conn.recv(4)
+        if not data:
+            break
+        size = struct.unpack('!I', data)[0]
+        
+        # recieve frame data
+        data = b''
+        while len(data) < size:
+            packet = conn.recv(size - len(data))
+            
+            if not packet:
+                break
+            data += packet
+
+        # decode
+        frame_data = np.frombuffer(data, dtype=np.uint8)
+        frame = cv2.imdecode(frame_data, 3)
+
+
+        pre_img = cv2.imread(_image_path)
+        cv2.imwrite( _image_path, frame)
+
+        ### diff frame and pre_frame
+        diff = cv2.absdiff(pre_img, frame)
+
+        if diff.mean() < 1.0:
+            print(f"no change [diff = {diff.mean()} < 1.0]")
+            conn.sendall(text.encode("utf-8"))
+            result = "None"
+            conn.sendall(result.encode("utf-8"))
+            continue
+        
+        print(f"change detected [diff = {diff.mean()} > 1.0]")
+        text = _image_model.run("recieved_frame.png", v2l_prompt)
+        conn.sendall(text.encode("utf-8"))
+        # result = _nlp_model.trans_en_to_jp(text)
+        result = "None"
+        conn.sendall(result.encode("utf-8"))
+
+
 def main(_host, _port, _image_model, _nlp_model, _image_path):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         # launch and wait
@@ -27,35 +74,7 @@ def main(_host, _port, _image_model, _nlp_model, _image_path):
                 # print("- device type :", conn_type)
                 if  conn_type == b"camera":
                     print("--> recived image data...")
-                    while True:
-
-                        # size of frame data
-                        data = conn.recv(4)
-                        if not data:
-                            break
-                        size = struct.unpack('!I', data)[0]
-                        
-                        # recieve frame data
-                        data = b''
-                        while len(data) < size:
-                            packet = conn.recv(size - len(data))
-                            
-                            if not packet:
-                                break
-                            data += packet
-
-                        # decode
-                        frame_data = np.frombuffer(data, dtype=np.uint8)
-                        frame = cv2.imdecode(frame_data, 3)
-
-                        cv2.imwrite( _image_path, frame)
-                        # text = generate_text(_model, _image_path)
-                        text = _image_model.run("recieved_frame.png", "この画像について説明してください。”モノ”について注意深く、可能な限り詳しく説明してください。")
-                        # text = "Hello World"
-                        conn.sendall(text.encode("utf-8"))
-                        # result = _nlp_model.trans_en_to_jp(text)
-                        result = "こんにちは、世界"
-                        conn.sendall(result.encode("utf-8"))
+                    camera_process(conn, _image_model, _image_path)
 
 
 if __name__ == "__main__":
